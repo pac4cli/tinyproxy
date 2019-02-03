@@ -165,6 +165,9 @@ static HANDLE_FUNC (handle_xtinyproxy);
 #ifdef UPSTREAM_SUPPORT
 static HANDLE_FUNC (handle_upstream);
 static HANDLE_FUNC (handle_upstream_no);
+#ifdef PACPARSER_SUPPORT
+static HANDLE_FUNC (handle_pacupstream);
+#endif
 #endif
 
 static void config_free_regex (void);
@@ -264,6 +267,9 @@ struct {
                       ":" INT "(" WS STR ")?"
                 END, handle_upstream, NULL
         },
+#ifdef PACPARSER_SUPPORT
+        STDCONF ("pacupstream", STR, handle_pacupstream),
+#endif
 #endif
         /* loglevel */
         STDCONF ("loglevel", "(critical|error|warning|notice|connect|info)",
@@ -1158,4 +1164,22 @@ static HANDLE_FUNC (handle_upstream_no)
 
         return 0;
 }
-#endif
+
+#ifdef PACPARSER_SUPPORT
+
+static HANDLE_FUNC (handle_pacupstream)
+{
+        int res;
+        res = set_string_arg (&conf->pac_filename, line, &match[2]);
+        if (res != 0)
+                return res;
+
+        pacparser_upstream_init ();
+        pacparser_upstream_load_script (conf->pac_filename);
+
+        return res;
+}
+
+#endif /* PACPARSER_SUPPORT */
+
+#endif /* UPSTREAM_SUPPORT */

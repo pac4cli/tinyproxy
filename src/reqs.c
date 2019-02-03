@@ -60,7 +60,11 @@
  * enabled.
  */
 #ifdef UPSTREAM_SUPPORT
-#  define UPSTREAM_CONFIGURED() (config.upstream_list != NULL)
+#  ifdef PACPARSER_SUPPORT
+#    define UPSTREAM_CONFIGURED() (config.upstream_list != NULL || config.pac_filename != NULL)
+#  else
+#    define UPSTREAM_CONFIGURED() (config.upstream_list != NULL)
+#  endif
 #  define UPSTREAM_HOST(host) upstream_get(host, config.upstream_list)
 #  define UPSTREAM_IS_HTTP(conn) (conn->upstream_proxy != NULL && conn->upstream_proxy->type == PT_HTTP)
 #else

@@ -135,6 +135,11 @@ display_usage (void)
         features++;
 #endif /* UPSTREAM_SUPPORT */
 
+#ifdef PACPARSER_SUPPORT
+        printf ("    pacparser support\n");
+        features++;
+#endif /* PACPARSER_SUPPORT */
+
         if (0 == features)
                 printf ("    None\n");
 

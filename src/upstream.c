@@ -24,11 +24,15 @@
  * Routines for handling the list of upstream proxies.
  */
 
+#include "string.h"
 #include "upstream.h"
 #include "heap.h"
 #include "log.h"
 #include "base64.h"
 #include "basicauth.h"
+#ifdef PACPARSER_SUPPORT
+#include "pacparser.h"
+#endif
 
 #ifdef UPSTREAM_SUPPORT
 const char *
@@ -202,6 +206,9 @@ upstream_cleanup:
  */
 struct upstream *upstream_get (char *host, struct upstream *up)
 {
+#       ifdef PACPARSER_SUPPORT
+                return pacparser_get(host);
+#       endif
         in_addr_t my_ip = INADDR_NONE;
 
         while (up) {
@@ -256,5 +263,62 @@ void free_upstream_list (struct upstream *up)
                 safefree (tmp);
         }
 }
+
+#ifdef PACPARSER_SUPPORT
+
+void pacparser_upstream_init (void)
+{
+        pacparser_init();
+}
+
+void pacparser_upstream_load_script (const char *pac_upstream_script)
+{
+        pacparser_parse_pac(pac_upstream_script);
+}
+
+struct upstream *pacparser_get (const char *host)
+{
+        char *proxy;
+        char *colon;
+        struct upstream *up = NULL;
+        proxy = pacparser_find_proxy(host, host);
+        log_message (LOG_INFO,
+                     "Retrieved proxy %s for host %s", proxy, host);
+
+        if (strncmp(proxy, "PROXY ", 6) == 0) {
+                proxy += 6;
+                colon = strrchr(proxy, ':');
+                if (!colon) {
+                        log_message (LOG_ERR,
+                                     "No port in proxy specification from pacparser_find_proxy(). Returning no upstream.");
+                        return NULL;
+                }
+
+                /* accept a ridiculous memory leak while I'm testing integration  *
+                 * with the rest of pac4cli                                       */
+                up = (struct upstream *) safemalloc (sizeof (struct upstream));
+                if (!up) {
+                        log_message (LOG_ERR,
+                                     "Unable to allocate memory in pacparser_get()");
+                        return NULL;
+                }
+                up->type = PT_HTTP;
+                up->domain = up->ua.user = up->pass = NULL;
+                up->ip = up->mask = 0;
+
+                up->host = (char *) safemalloc((colon - proxy + 1) * sizeof (char));
+                strncpy(up->host, proxy, (colon - proxy) * sizeof(char));
+                up->host[colon - proxy] = '\0';
+                up->port = atoi(colon + 1);
+        }
+        return up;
+}
+
+void pacparser_upstream_cleanup (void)
+{
+        pacparser_cleanup();
+}
+
+#endif  /* PACPARSER_SUPPORT */
 
 #endif

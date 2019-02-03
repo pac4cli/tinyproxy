@@ -61,4 +61,11 @@ extern struct upstream *upstream_get (char *host, struct upstream *up);
 extern void free_upstream_list (struct upstream *up);
 #endif /* UPSTREAM_SUPPORT */
 
+#ifdef PACPARSER_SUPPORT
+void pacparser_upstream_init (void);
+void pacparser_upstream_load_script (const char *pac_upstream_script);
+struct upstream *pacparser_get (const char *host);
+void pacparser_upstream_cleanup (void);
+#endif
+
 #endif /* _TINYPROXY_UPSTREAM_H_ */

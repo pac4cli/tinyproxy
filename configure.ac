@@ -96,6 +96,16 @@ if test x"$transparent_enabled" = x"yes"; then
    AC_DEFINE(TRANSPARENT_PROXY)
 fi
 
+dnl Include support for pacparser?
+AH_TEMPLATE([PACPARSER_SUPPORT],
+	    [Include support for the PacUpstream directive through the pacparser library])
+AC_ARG_WITH([pacparser], AS_HELP_STRING([--with-pacparser], [Add support for the PacUpstream directive through the pacparser library]))
+if test "x$with_pacparser" = "xyes"; then
+    AC_CHECK_HEADERS([pacparser.h])
+    LIBS+=-lpacparser
+    AC_DEFINE(PACPARSER_SUPPORT)
+fi
+
 # This is required to build test programs below
 AC_PROG_CC
 
